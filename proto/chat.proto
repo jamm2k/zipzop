@@ -1,0 +1,91 @@
+syntax = "proto3";
+
+package chat;
+
+// ─── MENSAGENS DE DADOS ───────────────────────────────────────────────────────
+
+enum MessageStatus {
+  SENT      = 0;  // ✓  chegou ao servidor
+  DELIVERED = 1;  // ✓✓ destinatário conectado e recebeu
+  READ      = 2;  // ✓✓ (azul) destinatário abriu a conversa
+}
+
+message User {
+  string phone    = 1;  // identificador único
+  string name     = 2;
+  string nickname = 3;
+}
+
+message Message {
+  string        id         = 1;
+  string        sender     = 2;  // numero do remetente
+  string        receiver   = 3;  // numero do destinatário
+  string        content    = 4;
+  string        timestamp  = 5;
+  MessageStatus status     = 6;
+}
+
+// ─── REGISTER ─────────────────────────────────────────────────────────────────
+
+message RegisterRequest {
+  string phone    = 1;
+  string name     = 2;
+  string nickname = 3;
+}
+
+message RegisterResponse {
+  bool   success = 1;
+  string message = 2;
+}
+
+// ─── SEND MESSAGE ─────────────────────────────────────────────────────────────
+
+message SendMessageRequest {
+  string sender   = 1;
+  string receiver = 2;
+  string content  = 3;
+}
+
+message SendMessageResponse {
+  bool          success    = 1;
+  string        message_id = 2;
+  MessageStatus status     = 3;
+}
+
+// ─── GET HISTORY ──────────────────────────────────────────────────────────────
+
+message GetHistoryRequest {
+  string user_a = 1;
+  string user_b = 2;
+}
+
+message GetHistoryResponse {
+  repeated Message messages = 1;
+}
+
+// ─── MARK AS READ ─────────────────────────────────────────────────────────────
+
+message MarkAsReadRequest {
+  string reader        = 1;  // numero de quem leu
+  string conversation_with = 2;  // numero do outro usuário
+}
+
+message MarkAsReadResponse {
+  bool success = 1;
+}
+
+// ─── SUBSCRIBE (stream de mensagens em tempo real) ────────────────────────────
+
+message SubscribeRequest {
+  string phone = 1;
+}
+
+// ─── SERVIÇO ──────────────────────────────────────────────────────────────────
+
+service ChatService {
+  rpc Register    (RegisterRequest)    returns (RegisterResponse);
+  rpc SendMessage (SendMessageRequest) returns (SendMessageResponse);
+  rpc GetHistory  (GetHistoryRequest)  returns (GetHistoryResponse);
+  rpc MarkAsRead  (MarkAsReadRequest)  returns (MarkAsReadResponse);
+  rpc Subscribe   (SubscribeRequest)   returns (stream Message);
+}
