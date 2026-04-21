@@ -64,6 +64,22 @@ class ChatServicer(chat_pb2_grpc.ChatServiceServicer):
             message="Telefone já cadastrado."
         )
 
+    # ── Login ─────────────────────────────────────────────────────────────────
+    def Login(self, request, context):
+        if db.user_exists(request.phone):
+            user = db.get_user(request.phone)
+            print(f"[SERVER] Usuário logado: {user['nickname']} ({request.phone})")
+            return chat_pb2.LoginResponse(
+                success=True,
+                nickname=user['nickname'],
+                message="Login bem-sucedido."
+            )
+        return chat_pb2.LoginResponse(
+            success=False,
+            nickname="",
+            message="Usuário não encontrado."
+        )
+
     # ── SendMessage ───────────────────────────────────────────────────────────
     def SendMessage(self, request, context):
         # Valida remetente e destinatário

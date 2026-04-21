@@ -113,13 +113,12 @@ def menu_logged_out(stub):
                 return phone
         elif choice == "2":
             phone = input("\n  Seu telefone: ").strip()
-            from server import database as db
-            if db.user_exists(phone):
-                user = db.get_user(phone)
-                print(f"  ✅ Bem-vindo, {user['nickname']}!")
+            resp = stub.Login(chat_pb2.LoginRequest(phone=phone))
+            if resp.success:
+                print(f"  ✅ Bem-vindo, {resp.nickname}!")
                 return phone
             else:
-                print("  ❌ Usuário não encontrado.")
+                print(f"  ❌ {resp.message}")
         elif choice == "0":
             sys.exit(0)
 

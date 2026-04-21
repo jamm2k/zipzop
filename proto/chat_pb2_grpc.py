@@ -3,7 +3,7 @@
 import grpc
 import warnings
 
-from proto import chat_pb2 as chat__pb2
+from proto import chat_pb2 as proto_dot_chat__pb2
 
 GRPC_GENERATED_VERSION = '1.80.0'
 GRPC_VERSION = grpc.__version__
@@ -18,7 +18,7 @@ except ImportError:
 if _version_not_supported:
     raise RuntimeError(
         f'The grpc package installed is at version {GRPC_VERSION},'
-        + ' but the generated code in chat_pb2_grpc.py depends on'
+        + ' but the generated code in proto/chat_pb2_grpc.py depends on'
         + f' grpcio>={GRPC_GENERATED_VERSION}.'
         + f' Please upgrade your grpc module to grpcio>={GRPC_GENERATED_VERSION}'
         + f' or downgrade your generated code using grpcio-tools<={GRPC_VERSION}.'
@@ -38,28 +38,33 @@ class ChatServiceStub(object):
         """
         self.Register = channel.unary_unary(
                 '/chat.ChatService/Register',
-                request_serializer=chat__pb2.RegisterRequest.SerializeToString,
-                response_deserializer=chat__pb2.RegisterResponse.FromString,
+                request_serializer=proto_dot_chat__pb2.RegisterRequest.SerializeToString,
+                response_deserializer=proto_dot_chat__pb2.RegisterResponse.FromString,
+                _registered_method=True)
+        self.Login = channel.unary_unary(
+                '/chat.ChatService/Login',
+                request_serializer=proto_dot_chat__pb2.LoginRequest.SerializeToString,
+                response_deserializer=proto_dot_chat__pb2.LoginResponse.FromString,
                 _registered_method=True)
         self.SendMessage = channel.unary_unary(
                 '/chat.ChatService/SendMessage',
-                request_serializer=chat__pb2.SendMessageRequest.SerializeToString,
-                response_deserializer=chat__pb2.SendMessageResponse.FromString,
+                request_serializer=proto_dot_chat__pb2.SendMessageRequest.SerializeToString,
+                response_deserializer=proto_dot_chat__pb2.SendMessageResponse.FromString,
                 _registered_method=True)
         self.GetHistory = channel.unary_unary(
                 '/chat.ChatService/GetHistory',
-                request_serializer=chat__pb2.GetHistoryRequest.SerializeToString,
-                response_deserializer=chat__pb2.GetHistoryResponse.FromString,
+                request_serializer=proto_dot_chat__pb2.GetHistoryRequest.SerializeToString,
+                response_deserializer=proto_dot_chat__pb2.GetHistoryResponse.FromString,
                 _registered_method=True)
         self.MarkAsRead = channel.unary_unary(
                 '/chat.ChatService/MarkAsRead',
-                request_serializer=chat__pb2.MarkAsReadRequest.SerializeToString,
-                response_deserializer=chat__pb2.MarkAsReadResponse.FromString,
+                request_serializer=proto_dot_chat__pb2.MarkAsReadRequest.SerializeToString,
+                response_deserializer=proto_dot_chat__pb2.MarkAsReadResponse.FromString,
                 _registered_method=True)
         self.Subscribe = channel.unary_stream(
                 '/chat.ChatService/Subscribe',
-                request_serializer=chat__pb2.SubscribeRequest.SerializeToString,
-                response_deserializer=chat__pb2.Message.FromString,
+                request_serializer=proto_dot_chat__pb2.SubscribeRequest.SerializeToString,
+                response_deserializer=proto_dot_chat__pb2.Message.FromString,
                 _registered_method=True)
 
 
@@ -69,6 +74,12 @@ class ChatServiceServicer(object):
     """
 
     def Register(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def Login(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -103,28 +114,33 @@ def add_ChatServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
             'Register': grpc.unary_unary_rpc_method_handler(
                     servicer.Register,
-                    request_deserializer=chat__pb2.RegisterRequest.FromString,
-                    response_serializer=chat__pb2.RegisterResponse.SerializeToString,
+                    request_deserializer=proto_dot_chat__pb2.RegisterRequest.FromString,
+                    response_serializer=proto_dot_chat__pb2.RegisterResponse.SerializeToString,
+            ),
+            'Login': grpc.unary_unary_rpc_method_handler(
+                    servicer.Login,
+                    request_deserializer=proto_dot_chat__pb2.LoginRequest.FromString,
+                    response_serializer=proto_dot_chat__pb2.LoginResponse.SerializeToString,
             ),
             'SendMessage': grpc.unary_unary_rpc_method_handler(
                     servicer.SendMessage,
-                    request_deserializer=chat__pb2.SendMessageRequest.FromString,
-                    response_serializer=chat__pb2.SendMessageResponse.SerializeToString,
+                    request_deserializer=proto_dot_chat__pb2.SendMessageRequest.FromString,
+                    response_serializer=proto_dot_chat__pb2.SendMessageResponse.SerializeToString,
             ),
             'GetHistory': grpc.unary_unary_rpc_method_handler(
                     servicer.GetHistory,
-                    request_deserializer=chat__pb2.GetHistoryRequest.FromString,
-                    response_serializer=chat__pb2.GetHistoryResponse.SerializeToString,
+                    request_deserializer=proto_dot_chat__pb2.GetHistoryRequest.FromString,
+                    response_serializer=proto_dot_chat__pb2.GetHistoryResponse.SerializeToString,
             ),
             'MarkAsRead': grpc.unary_unary_rpc_method_handler(
                     servicer.MarkAsRead,
-                    request_deserializer=chat__pb2.MarkAsReadRequest.FromString,
-                    response_serializer=chat__pb2.MarkAsReadResponse.SerializeToString,
+                    request_deserializer=proto_dot_chat__pb2.MarkAsReadRequest.FromString,
+                    response_serializer=proto_dot_chat__pb2.MarkAsReadResponse.SerializeToString,
             ),
             'Subscribe': grpc.unary_stream_rpc_method_handler(
                     servicer.Subscribe,
-                    request_deserializer=chat__pb2.SubscribeRequest.FromString,
-                    response_serializer=chat__pb2.Message.SerializeToString,
+                    request_deserializer=proto_dot_chat__pb2.SubscribeRequest.FromString,
+                    response_serializer=proto_dot_chat__pb2.Message.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -154,8 +170,35 @@ class ChatService(object):
             request,
             target,
             '/chat.ChatService/Register',
-            chat__pb2.RegisterRequest.SerializeToString,
-            chat__pb2.RegisterResponse.FromString,
+            proto_dot_chat__pb2.RegisterRequest.SerializeToString,
+            proto_dot_chat__pb2.RegisterResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def Login(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/chat.ChatService/Login',
+            proto_dot_chat__pb2.LoginRequest.SerializeToString,
+            proto_dot_chat__pb2.LoginResponse.FromString,
             options,
             channel_credentials,
             insecure,
@@ -181,8 +224,8 @@ class ChatService(object):
             request,
             target,
             '/chat.ChatService/SendMessage',
-            chat__pb2.SendMessageRequest.SerializeToString,
-            chat__pb2.SendMessageResponse.FromString,
+            proto_dot_chat__pb2.SendMessageRequest.SerializeToString,
+            proto_dot_chat__pb2.SendMessageResponse.FromString,
             options,
             channel_credentials,
             insecure,
@@ -208,8 +251,8 @@ class ChatService(object):
             request,
             target,
             '/chat.ChatService/GetHistory',
-            chat__pb2.GetHistoryRequest.SerializeToString,
-            chat__pb2.GetHistoryResponse.FromString,
+            proto_dot_chat__pb2.GetHistoryRequest.SerializeToString,
+            proto_dot_chat__pb2.GetHistoryResponse.FromString,
             options,
             channel_credentials,
             insecure,
@@ -235,8 +278,8 @@ class ChatService(object):
             request,
             target,
             '/chat.ChatService/MarkAsRead',
-            chat__pb2.MarkAsReadRequest.SerializeToString,
-            chat__pb2.MarkAsReadResponse.FromString,
+            proto_dot_chat__pb2.MarkAsReadRequest.SerializeToString,
+            proto_dot_chat__pb2.MarkAsReadResponse.FromString,
             options,
             channel_credentials,
             insecure,
@@ -262,8 +305,8 @@ class ChatService(object):
             request,
             target,
             '/chat.ChatService/Subscribe',
-            chat__pb2.SubscribeRequest.SerializeToString,
-            chat__pb2.Message.FromString,
+            proto_dot_chat__pb2.SubscribeRequest.SerializeToString,
+            proto_dot_chat__pb2.Message.FromString,
             options,
             channel_credentials,
             insecure,

@@ -38,6 +38,18 @@ message RegisterResponse {
   string message = 2;
 }
 
+// ─── LOGIN ────────────────────────────────────────────────────────────────────
+
+message LoginRequest {
+  string phone = 1;
+}
+
+message LoginResponse {
+  bool   success  = 1;
+  string nickname = 2;
+  string message  = 3;
+}
+
 // ─── SEND MESSAGE ─────────────────────────────────────────────────────────────
 
 message SendMessageRequest {
@@ -84,6 +96,7 @@ message SubscribeRequest {
 
 service ChatService {
   rpc Register    (RegisterRequest)    returns (RegisterResponse);
+  rpc Login       (LoginRequest)       returns (LoginResponse);
   rpc SendMessage (SendMessageRequest) returns (SendMessageResponse);
   rpc GetHistory  (GetHistoryRequest)  returns (GetHistoryResponse);
   rpc MarkAsRead  (MarkAsReadRequest)  returns (MarkAsReadResponse);
