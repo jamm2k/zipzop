@@ -12,7 +12,7 @@ from server import database as db
 # Guarda as filas de stream de cada usuário online
 # { phone: [queue, queue, ...] }  (pode ter múltiplas conexões)
 
-_subscribers: dict[str, list] = {}
+_subscribers: dict[str, list] = {} # usuario/lista de fila de mensagens
 _lock = threading.Lock()
 
 # ─── HELPERS ──────────────────────────────────────────────────────────────────
@@ -46,11 +46,8 @@ def _push_to_subscriber(phone: str, proto_msg: chat_pb2.Message):
         for q in queues:
             q.append(proto_msg)
 
-# ─── SERVIÇO ──────────────────────────────────────────────────────────────────
-
 class ChatServicer(chat_pb2_grpc.ChatServiceServicer):
 
-    # ── Register ──────────────────────────────────────────────────────────────
     def Register(self, request, context):
         success = db.create_user(request.phone, request.name, request.nickname)
         if success:
@@ -64,7 +61,6 @@ class ChatServicer(chat_pb2_grpc.ChatServiceServicer):
             message="Telefone já cadastrado."
         )
 
-    # ── Login ─────────────────────────────────────────────────────────────────
     def Login(self, request, context):
         if db.user_exists(request.phone):
             user = db.get_user(request.phone)
@@ -80,7 +76,6 @@ class ChatServicer(chat_pb2_grpc.ChatServiceServicer):
             message="Usuário não encontrado."
         )
 
-    # ── SendMessage ───────────────────────────────────────────────────────────
     def SendMessage(self, request, context):
         # Valida remetente e destinatário
         if not db.user_exists(request.sender):
@@ -96,7 +91,7 @@ class ChatServicer(chat_pb2_grpc.ChatServiceServicer):
         # Persiste com status SENT
         msg = db.save_message(request.sender, request.receiver, request.content)
 
-        # Se destinatário está online → marca DELIVERED e envia via stream
+        # Se destinatário está online -- marca DELIVERED e envia via stream
         if _is_online(request.receiver):
             db.mark_delivered(request.receiver)
             msg["status"] = db.STATUS_DELIVERED
@@ -113,18 +108,16 @@ class ChatServicer(chat_pb2_grpc.ChatServiceServicer):
             status     = _status_to_proto(msg["status"]),
         )
 
-    # ── GetHistory ────────────────────────────────────────────────────────────
     def GetHistory(self, request, context):
         messages = db.get_history(request.user_a, request.user_b)
         proto_msgs = [_dict_to_proto_message(m) for m in messages]
         return chat_pb2.GetHistoryResponse(messages=proto_msgs)
 
-    # ── MarkAsRead ────────────────────────────────────────────────────────────
     def MarkAsRead(self, request, context):
         db.mark_read(request.reader, request.conversation_with)
 
-        # Notifica o remetente original (se online) que foi lido
-        # Busca histórico para pegar as msgs atualizadas e empurrar ao remetente
+        # notifica o remetente original (se online) que foi lido
+        # busca histórico para pegar as msgs atualizadas e enviar ao remetente
         history = db.get_history(request.reader, request.conversation_with)
         for m in history:
             if m["sender"] == request.conversation_with and m["status"] == db.STATUS_READ:
@@ -133,7 +126,6 @@ class ChatServicer(chat_pb2_grpc.ChatServiceServicer):
 
         return chat_pb2.MarkAsReadResponse(success=True)
 
-    # ── Subscribe (server-side streaming) ─────────────────────────────────────
     def Subscribe(self, request, context):
         phone = request.phone
 

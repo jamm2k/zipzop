@@ -1,11 +1,12 @@
 import sys
+import os
 import threading
 import grpc
 
 sys.path.insert(0, ".")
 from proto import chat_pb2, chat_pb2_grpc
 
-SERVER_ADDRESS = "localhost:50051"
+SERVER_ADDRESS = "192.168.56.10:50051"
 
 # CONEXÃO ──────────────────────────────────────────────────────────────────
 
@@ -41,6 +42,9 @@ def listen_for_messages(stub, my_phone, stop_event):
     except grpc.RpcError:
         if not stop_event.is_set():
             print("\n[CLIENTE] Conexão com o servidor perdida.")
+        #tentar reconexão a cada 5 segundos
+        time.sleep(5)
+        return listen_for_messages(stub, my_phone, stop_event)
 
 # AÇÕES ────────────────────────────────────────────────────────────────────
 

@@ -21,33 +21,31 @@ def abrir_janela(titulo, comando):
 def main():
     print("Iniciando ZipZop...")
 
-    # 1. Servidor (usando -X utf8 para que a nova janela também suporte emojis)
+    # 1. Servidor na VM do Vagrant
     abrir_janela(
-        "ZipZop — Servidor",
-        f"{PYTHON} -X utf8 server/server.py"
+        "ZipZop — Servidor (Vagrant)",
+        'vagrant ssh server -c "cd /vagrant ; python3 server/server.py"'
     )
-    print("  ✅ Servidor iniciado")
+    print("  ✅ Conectando ao Servidor...")
 
-    # Aguarda o servidor subir antes dos clientes
+    # Aguarda um pouco para os próximos terminais
     time.sleep(2)
 
-    # 2. Cliente A
+    # 2. Cliente 1 na VM do Vagrant
     abrir_janela(
-        "ZipZop — Cliente A",
-        f"{PYTHON} -X utf8 client/client.py"
+        "ZipZop — Cliente 1 (Vagrant)",
+        'vagrant ssh client1 -c "cd /vagrant ; export ZIPZOP_SERVER=192.168.56.10:50051 ; python3 client/client.py"'
     )
-    print(" Cliente A iniciado")
+    print("  ✅ Conectando ao Cliente 1...")
 
     time.sleep(0.5)
 
-    # 3. Cliente B
+    # 3. Cliente 2 na VM do Vagrant
     abrir_janela(
-        "ZipZop — Cliente B",
-        f"{PYTHON} -X utf8 client/client.py"
+        "ZipZop — Cliente 2 (Vagrant)",
+        'vagrant ssh client2 -c "cd /vagrant ; export ZIPZOP_SERVER=192.168.56.10:50051 ; python3 client/client.py"'
     )
-    print(" Cliente B iniciado")
-
-    print("\n  Três janelas abertas! Bom teste 💬")
+    print("  ✅ Conectando ao Cliente 2...")
 
 if __name__ == "__main__":
     main()
