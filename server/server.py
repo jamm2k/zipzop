@@ -1,4 +1,5 @@
 import sys
+import time
 import threading
 from concurrent import futures
 from datetime import datetime
@@ -150,7 +151,7 @@ class ChatServicer(chat_pb2_grpc.ChatServiceServicer):
                     yield queue.pop(0)
                 else:
                     # Aguarda sem travar a thread (polling leve)
-                    import time; time.sleep(0.1)
+                    time.sleep(0.1)
         finally:
             # Limpeza ao desconectar
             with _lock:

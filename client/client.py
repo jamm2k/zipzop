@@ -2,6 +2,7 @@ import sys
 import os
 import threading
 import grpc
+import time
 
 sys.path.insert(0, ".")
 from proto import chat_pb2, chat_pb2_grpc
@@ -24,9 +25,24 @@ STATUS_ICON = {
 
 # STREAM LISTENER ──────────────────────────────────────────────────────────
 
-def listen_for_messages(stub, my_phone, stop_event):
+def listen_for_messages(stub, my_phone, stop_event, is_reconnect=False):
     """Roda em thread separada — escuta mensagens em tempo real."""
     try:
+        if is_reconnect:
+            # Testa a conexão e verifica o status do login no servidor
+            resp = stub.Login(chat_pb2.LoginRequest(phone=my_phone))
+            if not stop_event.is_set():
+                print("\n[CLIENTE] Conexão restabelecida!")
+                if resp.success:
+                    print(f"          Você continua logado como: {my_phone}")
+                else:
+                    print("          Aviso: Servidor não reconheceu o login (pode ter sido resetado).")
+                print("──────────────────────")
+                print("  1. Enviar mensagem")
+                print("  2. Ver histórico")
+                print("  0. Sair")
+                print("  > ", end="", flush=True)
+
         req = chat_pb2.SubscribeRequest(phone=my_phone)
         for msg in stub.Subscribe(req):
             if stop_event.is_set():
@@ -39,12 +55,22 @@ def listen_for_messages(stub, my_phone, stop_event):
                 icon = STATUS_ICON.get(msg.status, "?")
                 print(f"\n  [{icon}] Sua mensagem foi atualizada: '{msg.content[:30]}'")
             print("  > ", end="", flush=True)
-    except grpc.RpcError:
-        if not stop_event.is_set():
-            print("\n[CLIENTE] Conexão com o servidor perdida.")
-        #tentar reconexão a cada 5 segundos
+    except grpc.RpcError as e:
+        if stop_event.is_set():
+            return
+            
+        if hasattr(e, 'code') and e.code() == grpc.StatusCode.NOT_FOUND:
+            print("\n[CLIENTE] Seu usuário não foi encontrado no servidor.")
+            print("[CLIENTE] O servidor pode ter sido resetado. Encerrando cliente...")
+            os._exit(1)
+            
+        print("\n[CLIENTE] Conexão com o servidor perdida.")
+        print("[CLIENTE] Reconectando em 5 segundos...")
+        # tentar reconexão a cada 5 segundos
         time.sleep(5)
-        return listen_for_messages(stub, my_phone, stop_event)
+        return listen_for_messages(stub, my_phone, stop_event, is_reconnect=True)
+    
+
 
 # AÇÕES ────────────────────────────────────────────────────────────────────
 
@@ -151,10 +177,9 @@ def main():
     stub, channel = get_stub()
 
     try:
-        # Login / cadastro
         my_phone = menu_logged_out(stub)
 
-        # Inicia listener de mensagens em background
+        #inicia listener de mensagens em background
         stop_event = threading.Event()
         listener   = threading.Thread(
             target=listen_for_messages,
@@ -163,7 +188,7 @@ def main():
         )
         listener.start()
 
-        # Menu principal
+        # menu principal
         menu_logged_in(stub, my_phone, stop_event)
 
     except KeyboardInterrupt:
