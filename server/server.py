@@ -1,6 +1,7 @@
 import sys
 import time
 import threading
+import queue
 from concurrent import futures
 from datetime import datetime
 
@@ -45,7 +46,7 @@ def _push_to_subscriber(phone: str, proto_msg: chat_pb2.Message):
     with _lock:
         queues = _subscribers.get(phone, [])
         for q in queues:
-            q.append(proto_msg)
+            q.put(proto_msg)
 
 class ChatServicer(chat_pb2_grpc.ChatServiceServicer):
 
@@ -137,27 +138,32 @@ class ChatServicer(chat_pb2_grpc.ChatServiceServicer):
 
         print(f"[SERVER] {phone} conectou ao stream")
 
-        # Fila de mensagens desse cliente (lista usada como fila simples)
-        queue = []
+        # Fila de mensagens desse cliente (usando thread-safe Queue para evitar polling)
+        client_queue = queue.Queue()
         with _lock:
-            _subscribers.setdefault(phone, []).append(queue)
+            _subscribers.setdefault(phone, []).append(client_queue)
 
         # Ao conectar, marca pendentes como DELIVERED
         db.mark_delivered(phone)
 
+        # Registra callback para quando o cliente desconectar
+        def on_disconnect():
+            client_queue.put(None)
+        context.add_callback(on_disconnect)
+
         try:
-            while context.is_active():
-                if queue:
-                    yield queue.pop(0)
-                else:
-                    # Aguarda sem travar a thread (polling leve)
-                    time.sleep(0.1)
+            while True:
+                # Aguarda mensagem bloqueando a thread, sem fazer polling de status
+                msg = client_queue.get()
+                if msg is None:
+                    break
+                yield msg
         finally:
             # Limpeza ao desconectar
             with _lock:
                 if phone in _subscribers:
                     try:
-                        _subscribers[phone].remove(queue)
+                        _subscribers[phone].remove(client_queue)
                     except ValueError:
                         pass
                     if not _subscribers[phone]:
